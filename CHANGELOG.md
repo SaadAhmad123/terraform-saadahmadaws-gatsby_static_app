@@ -21,3 +21,7 @@ Added aws_caller_identity resolution
 ## [0.0.4] - 2024-08-18
 
 Bug fix
+
+## [0.0.5] - 2024-08-18
+
+Adding support for Route53 connection to distribution
