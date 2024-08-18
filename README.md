@@ -48,10 +48,7 @@ resource "null_resource" "gatsby_frontend_cache_invalidation" {
     command = "AWS_ACCESS_KEY_ID=${var.AWS_ACCESS_KEY} AWS_SECRET_ACCESS_KEY=${var.AWS_SECRET_KEY} aws cloudfront create-invalidation --distribution-id ${module.gatsby_frontend.cloudfront_distribution.id} --paths '/*'"
   }
 
-  depends_on = [
-    aws_s3_object.frontend_distribution,
-    aws_cloudfront_distribution.frontend_distribution
-  ]
+  depends_on = [module.gatsby_frontend]
 }
 ```
 
