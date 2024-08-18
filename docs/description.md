@@ -23,7 +23,8 @@ This Terraform module automates the deployment of a Gatsby static site to AWS, u
 
 ```hcl
 module "gatsby_frontend" {
-  source = "path/to/this/module"
+  source  = "SaadAhmad123/gatsby_static_app/saadahmadaws"
+  version = <version number>
 
   app_name         = "my-gatsby-blog"
   gatsby_build_path = "${path.module}/../gatsby_frontend/public"
@@ -31,6 +32,25 @@ module "gatsby_frontend" {
     Environment = "Production"
     Project     = "GatsbyBlog"
   }
+}
+
+# Create an invalidation. 
+# Note: The following is just one way of doing it. Use
+# your prefered method if you have any.
+# Create the invalidation
+resource "null_resource" "gatsby_frontend_cache_invalidation" {
+  triggers = {
+    distribution_hash = module.gatsby_frontend.distribution_hash
+  }
+
+  provisioner "local-exec" {
+    command = "AWS_ACCESS_KEY_ID=${var.AWS_ACCESS_KEY} AWS_SECRET_ACCESS_KEY=${var.AWS_SECRET_KEY} aws cloudfront create-invalidation --distribution-id ${module.gatsby_frontend.cloudfront_distribution.id} --paths '/*'"
+  }
+
+  depends_on = [
+    aws_s3_object.frontend_distribution,
+    aws_cloudfront_distribution.frontend_distribution
+  ]
 }
 ```
 

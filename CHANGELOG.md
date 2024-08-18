@@ -10,3 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Init module
 
 
+## [0.0.2] - 2024-08-18
+
+The module does not do Cloudfront Cache invalidation automatically. It is the responsibility of the user of the module to do so.

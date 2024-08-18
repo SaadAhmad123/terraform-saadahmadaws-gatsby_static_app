@@ -17,19 +17,15 @@ change_details=$(cat)
 current_date=$(date +"%Y-%m-%d")
 
 # Prepare the changelog entry
-changelog_entry="## [$version] - $current_date
+changelog_entry="
+## [$version] - $current_date
 
-$change_details
-
-"
+$change_details"
 
 # Check if CHANGELOG.md exists
 if [ -f "CHANGELOG.md" ]; then
-    # File exists, prepend the new entry
-    temp_file=$(mktemp)
-    echo "$changelog_entry" > "$temp_file"
-    cat "CHANGELOG.md" >> "$temp_file"
-    mv "$temp_file" "CHANGELOG.md"
+    # File exists, append the new entry
+    echo "$changelog_entry" >> "CHANGELOG.md"
     echo "CHANGELOG.md updated successfully."
 else
     # File doesn't exist, create it with the new entry
@@ -39,7 +35,6 @@ All notable changes to this project will be documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 $changelog_entry" > "CHANGELOG.md"
     echo "CHANGELOG.md created successfully."
 fi

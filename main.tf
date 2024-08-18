@@ -154,35 +154,3 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
     bucket          = aws_s3_bucket.cloudfront_logging.bucket_domain_name
   }
 }
-
-# Create the invalidation
-data "aws_caller_identity" "current" {}
-
-data "aws_iam_session_context" "current" {
-  arn = data.aws_caller_identity.current.arn
-}
-
-resource "null_resource" "frontend_cloudfront_invalidation" {
-  triggers = {
-    frontend_etag = sha1(join(",", [for key, obj in aws_s3_object.frontend_distribution : obj.etag]))
-  }
-
-  provisioner "local-exec" {
-    command = <<EOT
-      aws cloudfront create-invalidation \
-        --distribution-id ${aws_cloudfront_distribution.frontend_distribution.id} \
-        --paths '/*'
-    EOT
-
-    environment = {
-      AWS_ACCESS_KEY_ID     = data.aws_iam_session_context.current.access_key_id
-      AWS_SECRET_ACCESS_KEY = data.aws_iam_session_context.current.secret_access_key
-      AWS_SESSION_TOKEN     = data.aws_iam_session_context.current.session_token
-    }
-  }
-
-  depends_on = [
-    aws_s3_object.frontend_distribution,
-    aws_cloudfront_distribution.frontend_distribution
-  ]
-}
