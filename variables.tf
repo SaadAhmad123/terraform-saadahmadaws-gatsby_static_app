@@ -74,8 +74,7 @@ variable "cloudfront_viewer_certificate" {
   - minimum_protocol_version: Minimum TLS version supported
   - ssl_support_method: Method of SSL/TLS support (e.g., "sni-only" for SNI)
 
-  For detailed information, refer to the AWS provider documentation:
-  https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution#viewer-certificate-arguments
+  For detailed information, refer to the AWS provider [documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution#viewer-certificate-arguments).
 
   Default: Uses the CloudFront default certificate for *.cloudfront.net domains.
 
@@ -107,8 +106,8 @@ variable "cloudfront_aliases" {
 
   Example: ["www.mygatsbyblog.com", "blog.mycompany.com"]
 
-  For more details, see the AWS provider documentation:
-  https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution#aliases
+  For more details, see the AWS provider [documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution#aliases).
+  
 
   Note: Ensure you have the necessary permissions and certificates before configuring aliases.
   EOT
