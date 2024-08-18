@@ -11,7 +11,6 @@ This Terraform module automates the deployment of a Gatsby static site to AWS, u
 - Automatic file upload to S3 with proper content types
 - CloudFront Origin Access Identity (OAI) for secure S3 access
 - S3 bucket for CloudFront access logging
-- Automatic CloudFront cache invalidation on content updates
 
 ## Prerequisites
 
