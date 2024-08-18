@@ -113,6 +113,7 @@ No modules.
 | [aws_s3_bucket_policy.frontend_distribution](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
 | [aws_s3_bucket_website_configuration.frontend_distribution](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_website_configuration) | resource |
 | [aws_s3_object.frontend_distribution](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 
 ## Inputs
 
@@ -147,4 +148,8 @@ Init module
 ## [0.0.2] - 2024-08-18
 
 The module does not do Cloudfront Cache invalidation automatically. It is the responsibility of the user of the module to do so.
+
+## [0.0.3] - 2024-08-18
+
+Added aws\_caller\_identity resolution
 <!-- END_TF_DOCS -->

@@ -25,5 +25,5 @@ output "website_url" {
 
 output "distribution_hash" {
   description = "A SHA1 hash of the frontend distribution content ETags. Use this value along with 'module.<name>.cloudfront_distribution.id' to create targeted invalidations of the CloudFront cache when content changes."
-  value = sha1(join(",", [for key, obj in aws_s3_object.frontend_distribution : obj.etag]))
+  value       = sha1(join(",", [for key, obj in aws_s3_object.frontend_distribution : obj.etag]))
 }

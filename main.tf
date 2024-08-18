@@ -70,6 +70,8 @@ resource "aws_s3_bucket_ownership_controls" "cloudfront_logging" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_s3_bucket_policy" "cloudfront_logging" {
   bucket = aws_s3_bucket.cloudfront_logging.bucket
 
