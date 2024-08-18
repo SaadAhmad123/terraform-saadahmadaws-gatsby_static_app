@@ -3,7 +3,7 @@
 
 ## Overview
 
-This Terraform module automates the deployment of a Gatsby static site to AWS, utilizing S3 for storage and CloudFront for content delivery. It's designed to simplify the process of setting up a scalable and efficient hosting infrastructure for Gatsby-based websites (SSG only).
+This Terraform module automates the deployment of a Gatsby static site to AWS, utilizing S3 for storage and CloudFront for content delivery. It's designed to simplify the process of setting up a scalable and efficient hosting infrastructure for Gatsby-based websites (Static Site Generation only).
 
 ## Features
 
@@ -12,7 +12,7 @@ This Terraform module automates the deployment of a Gatsby static site to AWS, u
 - Automatic file upload to S3 with proper content types
 - CloudFront Origin Access Identity (OAI) for secure S3 access
 - S3 bucket for CloudFront access logging
-- Allows to integrate with Route53
+- Optional integration with Route53 for custom domain management
 
 ## Prerequisites
 
@@ -22,29 +22,32 @@ This Terraform module automates the deployment of a Gatsby static site to AWS, u
 
 ## Usage
 
-### 1. Simple deployment in CloudFront.
+### 1. Simple Deployment with CloudFront
+
 ```hcl
 module "gatsby_frontend" {
   source  = "SaadAhmad123/gatsby_static_app/saadahmadaws"
-  version = <version number>
+  version = "<version number>"
 
-  app_name         = "my-gatsby-blog"
+  # Specify the name of your application
+  app_name = "my-gatsby-blog"
+  # Path to your Gatsby build output
   gatsby_build_path = "${path.module}/../gatsby_frontend/public"
+  # Add tags for better resource management
   tags = {
     Environment = "Production"
     Project     = "GatsbyBlog"
   }
 }
 
-# Create an invalidation.
-# Note: The following is just one way of doing it. Use
-# your prefered method if you have any.
-# Create the invalidation
+# Create a CloudFront cache invalidation after deployment
 resource "null_resource" "gatsby_frontend_cache_invalidation" {
+  # Trigger invalidation when the distribution changes
   triggers = {
     distribution_hash = module.gatsby_frontend.distribution_hash
   }
 
+  # Use AWS CLI to create an invalidation
   provisioner "local-exec" {
     command = "AWS_ACCESS_KEY_ID=${var.AWS_ACCESS_KEY} AWS_SECRET_ACCESS_KEY=${var.AWS_SECRET_KEY} aws cloudfront create-invalidation --distribution-id ${module.gatsby_frontend.cloudfront_distribution.id} --paths '/*'"
   }
@@ -53,23 +56,25 @@ resource "null_resource" "gatsby_frontend_cache_invalidation" {
 }
 ```
 
-### 1. Advanced deployment in CloudFront and integration with Route53
+### 2. Advanced Deployment with CloudFront and Route53 Integration
+
 ```hcl
-# Non-default AWS provider for us-east-1 region
-# Required for the certifcate and its validation
+# Define a non-default AWS provider for us-east-1 region
+# This is required for ACM certificate creation and validation
 provider "aws" {
   alias  = "us-east-1"
   region = "us-east-1"
 }
 
-# Get the hosted zone
+# Fetch the Route53 hosted zone for your domain
 data "aws_route53_zone" "zone" {
-  name = "<domain>.com."
+  name = "<your-domain>.com."
 }
 
+# Create an ACM certificate for your domain
 resource "aws_acm_certificate" "gatsby_frontend" {
-  provider = aws.us-east-1
-  domain_name       = "<domain name>
+  provider          = aws.us-east-1
+  domain_name       = "<your-domain-name>"
   validation_method = "DNS"
   subject_alternative_names = []
 
@@ -78,14 +83,17 @@ resource "aws_acm_certificate" "gatsby_frontend" {
   }
 }
 
+# Deploy the Gatsby frontend
 module "gatsby_frontend" {
   source  = "SaadAhmad123/gatsby_static_app/saadahmadaws"
-  version = <version number>
+  version = "<version number>"
 
   app_name         = "my-gatsby-site"
   gatsby_build_path = "${path.module}/../gatsby_frontend/public"
-  cloudfront_aliases = ["domain name"]
+  # Specify the domain aliases for CloudFront
+  cloudfront_aliases = ["<your-domain-name>"]
 
+  # Configure CloudFront to use the ACM certificate
   cloudfront_viewer_certificate = {
     acm_certificate_arn = aws_acm_certificate.gatsby_frontend.arn
     ssl_support_method  = "sni-only"
@@ -97,6 +105,7 @@ module "gatsby_frontend" {
   }
 }
 
+# Create DNS records for ACM certificate validation
 resource "aws_route53_record" "gatsby_frontend__certificates" {
   for_each = {
     for dvo in aws_acm_certificate.gatsby_frontend.domain_validation_options : dvo.domain_name => {
@@ -114,15 +123,17 @@ resource "aws_route53_record" "gatsby_frontend__certificates" {
   zone_id         = data.aws_route53_zone.zone.zone_id
 }
 
+# Validate the ACM certificate
 resource "aws_acm_certificate_validation" "gatsby_frontend" {
-  provider = aws.us-east-1
+  provider                = aws.us-east-1
   certificate_arn         = aws_acm_certificate.gatsby_frontend.arn
   validation_record_fqdns = [for record in aws_route53_record.gatsby_frontend__certificates : record.fqdn]
 }
 
+# Create a Route53 record to point your domain to CloudFront
 resource "aws_route53_record" "gatsby_frontend" {
   zone_id = data.aws_route53_zone.zone.zone_id
-  name    = "<sub-domain | Optional>.<domain name>.com" # Leave "" in case of root domain
+  name    = "<subdomain>.<your-domain>.com" # Use "" for root domain
   type    = "A"
 
   alias {
@@ -132,10 +143,7 @@ resource "aws_route53_record" "gatsby_frontend" {
   }
 }
 
-# Create an invalidation.
-# Note: The following is just one way of doing it. Use
-# your prefered method if you have any.
-# Create the invalidation
+# Create a CloudFront cache invalidation after deployment
 resource "null_resource" "gatsby_frontend_cache_invalidation" {
   triggers = {
     distribution_hash = module.gatsby_frontend.distribution_hash
@@ -151,7 +159,7 @@ resource "null_resource" "gatsby_frontend_cache_invalidation" {
 
 ## Assumptions and Requirements
 
-1. The Gatsby project is purely static site generation (SSG) based.
+1. The Gatsby project uses purely static site generation (SSG).
 2. The built Gatsby files are located in the directory specified by `gatsby_build_path`.
 3. The AWS provider is already configured in the root module or through environment variables.
 4. The user running Terraform has sufficient AWS permissions to create and manage the required resources.
@@ -160,21 +168,22 @@ resource "null_resource" "gatsby_frontend_cache_invalidation" {
 ## Important Notes
 
 - This module creates public resources. Ensure that sensitive information is not exposed in your Gatsby build.
-- The CloudFront distribution uses the default CloudFront certificate. For custom domains, additional configuration is required.
+- For custom domains, additional configuration is required as shown in the advanced deployment example.
 - The module performs a CloudFront cache invalidation after each deployment, which may incur additional costs.
 
 ## Customization
 
-You can modify the `aws_cloudfront_distribution` resource to add custom behaviors, change the price class, or adjust caching settings as needed for your specific use case.
+You can modify the `aws_cloudfront_distribution` resource within the module to add custom behaviors, change the price class, or adjust caching settings as needed for your specific use case.
 
 ## Security Considerations
 
 - The S3 bucket is not publicly accessible. All access is controlled through CloudFront.
 - Ensure that your AWS credentials are kept secure and not exposed in your Terraform code.
+- Use IAM roles and least privilege principle when setting up AWS access for Terraform.
 
 ## Cost Considerations
 
-This module uses AWS services that may incur costs. Be aware of the pricing for S3, CloudFront, and CloudFront invalidations in your AWS account.
+This module uses AWS services that may incur costs. Be aware of the pricing for S3, CloudFront, and CloudFront invalidations in your AWS account. Monitor your usage and set up billing alerts if necessary.
 
 ## Requirements
 
