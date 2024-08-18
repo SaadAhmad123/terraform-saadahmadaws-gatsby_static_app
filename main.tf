@@ -102,6 +102,8 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
     }
   }
 
+  aliases = var.cloudfront_aliases
+
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"

@@ -158,4 +158,8 @@ Bug fix
 ## [0.0.5] - 2024-08-18
 
 Adding support for Route53 connection to distribution
+
+## [0.0.6] - 2024-08-18
+
+Bug fix
 <!-- END_TF_DOCS -->
