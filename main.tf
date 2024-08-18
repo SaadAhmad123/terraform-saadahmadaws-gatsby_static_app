@@ -149,9 +149,7 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
     }
   }
 
-  viewer_certificate {
-    cloudfront_default_certificate = true
-  }
+  viewer_certificate = var.cloudfront_viewer_certificate
 
   logging_config {
     include_cookies = false
