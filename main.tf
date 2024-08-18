@@ -93,6 +93,8 @@ resource "aws_s3_bucket_policy" "cloudfront_logging" {
 
 # Setting up the cloudfront distribution
 resource "aws_cloudfront_distribution" "frontend_distribution" {
+  tags = var.tags
+  
   origin {
     domain_name = aws_s3_bucket.frontend_distribution.bucket_regional_domain_name
     origin_id   = "S3-${aws_s3_bucket.frontend_distribution.id}"

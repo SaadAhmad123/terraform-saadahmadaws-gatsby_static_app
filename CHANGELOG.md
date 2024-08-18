@@ -37,3 +37,7 @@ Bug fix
 ## [0.0.8] - 2024-08-18
 
 Bug fix
+
+## [0.1.0] - 2024-08-18
+
+Stable release of the module.

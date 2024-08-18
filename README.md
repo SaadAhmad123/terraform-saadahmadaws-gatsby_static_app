@@ -12,6 +12,7 @@ This Terraform module automates the deployment of a Gatsby static site to AWS, u
 - Automatic file upload to S3 with proper content types
 - CloudFront Origin Access Identity (OAI) for secure S3 access
 - S3 bucket for CloudFront access logging
+- Allows to integrate with Route53
 
 ## Prerequisites
 
@@ -21,6 +22,7 @@ This Terraform module automates the deployment of a Gatsby static site to AWS, u
 
 ## Usage
 
+### 1. Simple deployment in CloudFront.
 ```hcl
 module "gatsby_frontend" {
   source  = "SaadAhmad123/gatsby_static_app/saadahmadaws"
@@ -31,6 +33,102 @@ module "gatsby_frontend" {
   tags = {
     Environment = "Production"
     Project     = "GatsbyBlog"
+  }
+}
+
+# Create an invalidation.
+# Note: The following is just one way of doing it. Use
+# your prefered method if you have any.
+# Create the invalidation
+resource "null_resource" "gatsby_frontend_cache_invalidation" {
+  triggers = {
+    distribution_hash = module.gatsby_frontend.distribution_hash
+  }
+
+  provisioner "local-exec" {
+    command = "AWS_ACCESS_KEY_ID=${var.AWS_ACCESS_KEY} AWS_SECRET_ACCESS_KEY=${var.AWS_SECRET_KEY} aws cloudfront create-invalidation --distribution-id ${module.gatsby_frontend.cloudfront_distribution.id} --paths '/*'"
+  }
+
+  depends_on = [module.gatsby_frontend]
+}
+```
+
+### 1. Advanced deployment in CloudFront and integration with Route53
+```hcl
+# Non-default AWS provider for us-east-1 region
+# Required for the certifcate and its validation
+provider "aws" {
+  alias  = "us-east-1"
+  region = "us-east-1"
+}
+
+# Get the hosted zone
+data "aws_route53_zone" "zone" {
+  name = "<domain>.com."
+}
+
+resource "aws_acm_certificate" "gatsby_frontend" {
+  provider = aws.us-east-1
+  domain_name       = "<domain name>
+  validation_method = "DNS"
+  subject_alternative_names = []
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+module "gatsby_frontend" {
+  source  = "SaadAhmad123/gatsby_static_app/saadahmadaws"
+  version = <version number>
+
+  app_name         = "my-gatsby-site"
+  gatsby_build_path = "${path.module}/../gatsby_frontend/public"
+  cloudfront_aliases = ["domain name"]
+
+  cloudfront_viewer_certificate = {
+    acm_certificate_arn = aws_acm_certificate.gatsby_frontend.arn
+    ssl_support_method  = "sni-only"
+  }
+
+  tags = {
+    Environment = "Production"
+    Project     = "GatsbySite"
+  }
+}
+
+resource "aws_route53_record" "gatsby_frontend__certificates" {
+  for_each = {
+    for dvo in aws_acm_certificate.gatsby_frontend.domain_validation_options : dvo.domain_name => {
+      name    = dvo.resource_record_name
+      record  = dvo.resource_record_value
+      type    = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.zone.zone_id
+}
+
+resource "aws_acm_certificate_validation" "gatsby_frontend" {
+  provider = aws.us-east-1
+  certificate_arn         = aws_acm_certificate.gatsby_frontend.arn
+  validation_record_fqdns = [for record in aws_route53_record.gatsby_frontend__certificates : record.fqdn]
+}
+
+resource "aws_route53_record" "gatsby_frontend" {
+  zone_id = data.aws_route53_zone.zone.zone_id
+  name    = "<sub-domain | Optional>.<domain name>.com" # Leave "" in case of root domain
+  type    = "A"
+
+  alias {
+    name                   = module.gatsby_frontend.cloudfront_distribution.domain_name
+    zone_id                = module.gatsby_frontend.cloudfront_distribution.hosted_zone_id
+    evaluate_target_health = false
   }
 }
 
@@ -170,4 +268,8 @@ Bug fix
 ## [0.0.8] - 2024-08-18
 
 Bug fix
+
+## [0.1.0] - 2024-08-18
+
+Stable release of the module.
 <!-- END_TF_DOCS -->
