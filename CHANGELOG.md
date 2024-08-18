@@ -17,3 +17,7 @@ The module does not do Cloudfront Cache invalidation automatically. It is the re
 ## [0.0.3] - 2024-08-18
 
 Added aws_caller_identity resolution
+
+## [0.0.4] - 2024-08-18
+
+Bug fix

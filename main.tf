@@ -8,8 +8,8 @@ resource "aws_s3_object" "frontend_distribution" {
   for_each = fileset(var.gatsby_build_path, "**/*")
   bucket   = aws_s3_bucket.frontend_distribution.id
   key      = each.value
-  source   = "${aws_s3_bucket.frontend_distribution.id}/${each.value}"
-  etag     = filemd5("${aws_s3_bucket.frontend_distribution.id}/${each.value}")
+  source   = "${var.gatsby_build_path}/${each.value}"
+  etag     = filemd5("${var.gatsby_build_path}/${each.value}")
 
   content_type = lookup({
     "html" = "text/html",
