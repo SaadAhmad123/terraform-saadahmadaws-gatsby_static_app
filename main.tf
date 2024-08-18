@@ -149,7 +149,13 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
     }
   }
 
-  viewer_certificate = var.cloudfront_viewer_certificate
+  viewer_certificate {
+    acm_certificate_arn            = var.cloudfront_viewer_certificate.acm_certificate_arn
+    cloudfront_default_certificate = var.cloudfront_viewer_certificate.cloudfront_default_certificate
+    iam_certificate_id             = var.cloudfront_viewer_certificate.iam_certificate_id
+    minimum_protocol_version       = var.cloudfront_viewer_certificate.minimum_protocol_version
+    ssl_support_method             = var.cloudfront_viewer_certificate.ssl_support_method
+  }
 
   logging_config {
     include_cookies = false
